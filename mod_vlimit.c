@@ -16,6 +16,8 @@
 //  2010/09/22 0.22 make_file_slot_list() create matsumoto_r
 //  2010/09/22 0.90 vlimit_mutex add matsumoto_r
 //  2010/12/24 1.00 ServerAlias routine add matsumoto_r
+//
+//  2023/07/26 1.00-odp1 fix HTTP1.0/no Host Header request issue (ignore) add kwatanabe@opendoor.co.jp
 // -------------------------------------------------------------------
 */
 
@@ -37,7 +39,7 @@
 #include <apr_global_mutex.h>
 
 #define MODULE_NAME "mod_vlimit"
-#define MODULE_VERSION "1.00"
+#define MODULE_VERSION "1.00-odp1"
 #define SET_VLIMITDEFAULT 0
 #define SET_VLIMITIP 1
 #define SET_VLIMITFILE 2
@@ -505,6 +507,10 @@ static int check_virtualhost_name(request_rec *r)
   char *access_host;
 
   header_name = apr_table_get(r->headers_in, "HOST");
+  if (header_name == NULL) {
+    header_name = "NoHostHeader";
+  }
+
   access_host = strtok((char *)header_name, ":");
   if (access_host == NULL) {
     access_host = (char *)header_name;
@@ -562,6 +568,10 @@ static int vlimit_check_limit(request_rec *r, vlimit_config *cfg)
   }
 
   header_name = apr_table_get(r->headers_in, "HOST");
+  if (header_name == NULL) {
+    header_name = "NoHostHeader";
+  }
+  
   access_host = strtok((char *)header_name, ":");
   if (access_host == NULL) {
     access_host = (char *)header_name;
@@ -629,7 +639,7 @@ static int vlimit_check_limit(request_rec *r, vlimit_config *cfg)
 
   if (cfg->ip_limit > 0 && ip_count > cfg->ip_limit) {
     vlimit_debug_log_buf = apr_psprintf(r->pool, "Rejected, too many connections from this host(%s) to the file(%s) by "
-                                                 "VlimitIP[ip_limig=(%d) docroot=(%s)].",
+                                                 "VlimitIP[ip_limit=(%d) docroot=(%s)].",
                                         r->connection->remote_ip, access_host, cfg->ip_limit, cfg->full_path);
     VLIMIT_DEBUG_SYSLOG("vlimit_check_limit: ", vlimit_debug_log_buf, r->pool);
 

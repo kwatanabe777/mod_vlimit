@@ -6,4 +6,4 @@ mod_vlimit.slo
 GPATH                                                            
 GRTAGS                                                           
 GTAGS                                                            
-
+*.swp

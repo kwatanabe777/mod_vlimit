@@ -148,3 +148,21 @@ LoadModule vlimit_module modules/mod_vlimit.so
     [Fri Mar 11 11:54:29 2011] slot=[0] ipaddress=[172.16.71.40] counter=[3]
     [Fri Mar 11 11:54:29 2011] slot=[0] ipaddress=[172.16.71.49] counter=[1]
     ```
+
+## mod_vlimit patch
+by kwatanabe@opendoor.co.jp
+2023-07-26
+
+* mod_vlimit-1.00_kw-p1-nohostfix.patch
+HTTP1.0でのリクエスト時にSegVで落ちるのを修正
+Host:ヘッダが無いリクエストは、このモジュール内では扱わない様に修正(virtualhost名と合わない様にNoHostHeaderとした)
+
+* mod_vlimit-1.00_kw-p2-thsfix.patch
+スレッドセーフではない、strtok()が使われていたのを修正。
+APR組み込みのapr_strtok()に変更した
+
+* mod_vlimit-1.00_kw-p3-c99fix.patch
+コンパイルwarningが出るのを修正
+
+* mod_vlimit-1.00_kw-p1-3.patch
+上記patchを全て含んだpatch
