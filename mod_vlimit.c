@@ -19,6 +19,7 @@
 //
 //  2023/07/26 1.00-odp1 fix HTTP1.0/no Host Header request issue (ignore) add kwatanabe@opendoor.co.jp
 //                  fix2 Thread Unsafe function of strtio() is replaced to apr_strtok() add kwatanabe@opendoor.co.jp
+//                  fix3 c99 compile warning fixed. add kwatanabe@opendoor.co.jp
 // -------------------------------------------------------------------
 */
 
@@ -40,7 +41,7 @@
 #include <apr_global_mutex.h>
 
 #define MODULE_NAME "mod_vlimit"
-#define MODULE_VERSION "1.00-odp2"
+#define MODULE_VERSION "1.00-odp3"
 #define SET_VLIMITDEFAULT 0
 #define SET_VLIMITIP 1
 #define SET_VLIMITFILE 2
@@ -116,7 +117,8 @@ static int VLIMIT_DEBUG_SYSLOG(const char *key, const char *msg, apr_pool_t *p)
     vlimit_buf = (char *)apr_psprintf(p, MODULE_NAME ": %s%s", key, msg);
 
     openlog(NULL, LOG_PID, LOG_SYSLOG);
-    syslog(LOG_DEBUG, vlimit_buf);
+   // syslog(LOG_DEBUG, vlimit_buf);
+    syslog(LOG_DEBUG, "%s", vlimit_buf);
     closelog();
 
     return 0;
@@ -814,7 +816,8 @@ static int vlimit_handler(request_rec *r)
                                         cfg->full_path, real_path_dir);
     VLIMIT_DEBUG_SYSLOG("vlimit_handler: ", vlimit_debug_log_buf, r->pool);
   } else {
-    vlimit_debug_log_buf = apr_psprintf(r->pool, "full_path not found. cfg->full_path=(%s)", cfg->full_path);
+    //vlimit_debug_log_buf = apr_psprintf(r->pool, "full_path not found. cfg->full_path=(%s)", cfg->full_path);
+    vlimit_debug_log_buf = apr_psprintf(r->pool, "full_path not found. cfg->full_path=((null))");
     VLIMIT_DEBUG_SYSLOG("vlimit_handler: ", vlimit_debug_log_buf, r->pool);
   }
 
@@ -829,14 +832,14 @@ static int vlimit_handler(request_rec *r)
 /* --- Access Checker for Per Server Config --- */
 /* -------------------------------------------- */
 /* For server configration */
-static int vlimit_quick_handler(request_rec *r, int lookup)
+/*static int vlimit_quick_handler(request_rec *r, int lookup)
 {
   vlimit_config *cfg = (vlimit_config *)ap_get_module_config(r->server->module_config, &vlimit_module);
 
   int result;
   char *real_path_dir = (char *)apr_pcalloc(r->pool, sizeof(char *) * PATH_MAX + 1);
 
-  /* full_path check */
+  // * full_path check * /
   if (cfg->full_path != NULL) {
 
     if (access(r->filename, F_OK) != 0) {
@@ -868,7 +871,7 @@ static int vlimit_quick_handler(request_rec *r, int lookup)
   VLIMIT_DEBUG_SYSLOG("vlimit_quick_handler: ", "mod_vlimit: Entering quick handler", r->pool);
 
   return result;
-}
+}*/
 
 /* ------------------------------------ */
 /* --- Command_rec for VlimitIP--- */
