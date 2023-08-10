@@ -18,6 +18,7 @@
 //  2010/12/24 1.00 ServerAlias routine add matsumoto_r
 //
 //  2023/07/26 1.00-odp1 fix HTTP1.0/no Host Header request issue (ignore) add kwatanabe@opendoor.co.jp
+//                  fix2 Thread Unsafe function of strtio() is replaced to apr_strtok() add kwatanabe@opendoor.co.jp
 // -------------------------------------------------------------------
 */
 
@@ -39,7 +40,7 @@
 #include <apr_global_mutex.h>
 
 #define MODULE_NAME "mod_vlimit"
-#define MODULE_VERSION "1.00-odp1"
+#define MODULE_VERSION "1.00-odp2"
 #define SET_VLIMITDEFAULT 0
 #define SET_VLIMITIP 1
 #define SET_VLIMITFILE 2
@@ -505,13 +506,14 @@ static int check_virtualhost_name(request_rec *r)
   const char *header_name;
   const char *alias_name;
   char *access_host;
+  char *last;
 
   header_name = apr_table_get(r->headers_in, "HOST");
   if (header_name == NULL) {
     header_name = "NoHostHeader";
   }
 
-  access_host = strtok((char *)header_name, ":");
+  access_host = apr_strtok((char *)header_name, ":", &last);
   if (access_host == NULL) {
     access_host = (char *)header_name;
   }
@@ -552,6 +554,7 @@ static int vlimit_check_limit(request_rec *r, vlimit_config *cfg)
 
   const char *header_name;
   const char *access_host;
+  char *last;
 
   int ip_count = 0;
   int file_count = 0;
@@ -572,7 +575,7 @@ static int vlimit_check_limit(request_rec *r, vlimit_config *cfg)
     header_name = "NoHostHeader";
   }
   
-  access_host = strtok((char *)header_name, ":");
+  access_host = apr_strtok((char *)header_name, ":", &last);
   if (access_host == NULL) {
     access_host = (char *)header_name;
   }
